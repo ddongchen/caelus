@@ -51,7 +51,8 @@ _output/bin/plugin-server
 [xx]# ll _output/RPMS/x86_64
 _output/RPMS/x86_64/plugin-server-0.3.0-47.el7.x86_64.rpm
 ```
-lighthouse工作原理：
+lighthouse工作流程
+![lighthouse工作原理](images/lighthouse.png)
 
 
 # 安装
@@ -105,7 +106,25 @@ systemctl restart kubelet
 ```
 
 # 部署caelus
+###配置文件
+####1、caelus.json
+caelus.json文件描述了caelus内置的各个模块的各种配置，其[默认配置](../hack/config/caelus.json)可以让caelus正常运行，但最好是根据业务的实际需求来适配不同的参数。
+具体参数说明可参考[caelus配置文件说明]()
 
+####2、rules.json
+rules.json文件描述了caelus的干扰检测规则。如cpu检测，首先配置检测算法，如表达式检测（expression），或指数加权平均检测（ewma）。若选择expression算法，可配置每隔1分钟检测节点cpu使用率，若连续3次超过90%，或连续5分钟内超过90%，则认为节点当前cpu
+负载比较高，采取禁止调度，及降低离线cpu资源。降低cpu资源按照每2分钟降低1个核。若节点cpu恢复正常，则按照每3分钟恢复0.5个核，直至恢复所有之前降低的cpu核数。
+具体配置参数可参考[干扰检测规则说明](./rules.md)
+
+###运行caelus
+caelus可通过daemonset部署到K8s集群中，pod需要配置某些capabilities，同时需要挂载宿主机根目录到caelus容器中，以便cadvisor可以正常运行。
+具体yaml可参考[caelus yaml](../hack/yaml/caelus.yaml)
+
+用户也可以根据需求直接将caelus运行在宿主机上，这可以通过rpm包进行部署。其运行命令为：
+
+caelus --v=2 --logtostderr --config=/etc/caelus/caelus.json --hostname-override=$(NODE_NAME) --insecure-bind-address=xx
+
+若使用diskquota功能，则需要再增加：--docker=unix:///var/run/docker.sock，用于跟docker通信，获取容器的挂载目录
 # 提交离线作业
 1、离线作业通过kubernetes提交
 
