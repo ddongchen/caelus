@@ -10,4 +10,18 @@ caelus进程重启恢复状态
 
 （2）checkpoint的内容存放目录。若caelus运行在容器中，此目录需为hostpath
 
-### 3、
+### 3、task_type
+
+### 4、node_resource
+
+### 5、predicts
+
+### 6、metrics
+
+### 7、resource_isolate
+
+### 8、online
+
+### 9、alarm
+
+### 10、disk_quota
