@@ -101,17 +101,17 @@ systemctl restart kubelet
 ```
 
 # 部署caelus
-###配置文件
-####1、caelus.json
+### 配置文件
+#### 1、caelus.json
 caelus.json文件描述了caelus内置的各个模块的各种配置，其[默认配置](../hack/config/caelus.json)可以让caelus正常运行，但最好是根据业务的实际需求来适配不同的参数。
-具体参数说明可参考[caelus配置文件说明](xxxx)
+具体参数说明可参考[caelus配置文件说明](./config.md)
 
-####2、rules.json
+#### 2、rules.json
 rules.json文件描述了caelus的干扰检测规则。如cpu检测，首先配置检测算法，如表达式检测（expression），或指数加权平均检测（ewma）。若选择expression算法，可配置每隔1分钟检测节点cpu使用率，若连续3次超过90%，或连续5分钟内超过90%，则认为节点当前cpu
 负载比较高，采取禁止调度，及降低离线cpu资源。降低cpu资源按照每2分钟降低1个核。若节点cpu恢复正常，则按照每3分钟恢复0.5个核，直至恢复所有之前降低的cpu核数。
 具体配置参数可参考[干扰检测规则说明](./rules.md)
 
-###运行caelus
+### 运行caelus
 caelus可通过daemonset部署到K8s集群中，pod需要配置某些capabilities，同时需要挂载宿主机根目录到caelus容器中，以便cadvisor可以正常运行。
 具体yaml可参考[caelus yaml](../hack/yaml/caelus.yaml)
 
@@ -122,24 +122,24 @@ caelus --v=2 --logtostderr --config=/etc/caelus/caelus.json --hostname-override=
 若使用diskquota功能，则需要再增加：--docker=unix:///var/run/docker.sock，用于跟docker通信，获取容器的挂载目录
 
 # 在线作业场景
-###1、在线作业为非K8s场景
+### 1、在线作业为非K8s场景
 在线作业直接运行在物理机上，如很多还未来得及容器化或不适合容器化的在线作业。因Caelus目前上基于K8s平台，所以需要在物理机上部署K8s相关组件，具体如下：
 
 （1）在线作业所在的节点部署K8s slave组件
 
 （2）配置文件caelus.json，配置"task_type.online_type"为"local"。"online.enable"配置为true，"online.pid_to_cgroup"配置移动在线进程pid
 到统一cgroup目录下，便于cadvisor收集数据。"online.jobs"填写跟在线作业相关的信息，其中"online.jobs.command"为在线进程的正则匹配表达式。
-若在线作业有暴露指标，可以填写到"online.jobs.metrics"。具体可参考[配置文件说明](xxx)
+若在线作业有暴露指标，可以填写到"online.jobs.metrics"。具体可参考[配置文件说明](./config.md)
 
 （3）提交caelus workload。caelus会自动匹配在线进程，并将其移动到统一cgroup目录下。若在线进程本身就在cgroup目录中，则直接使用现有的cgroup目录
 
 （4）curl http://xxx:10030/metrics | grep online 可查看在线作业的资源使用情况
 
-###2、在线作业为K8s场景
+### 2、在线作业为K8s场景
 在线作业直接运行在K8s平台，只需修改配置文件, 配置"task_type.online_type"为"k8s"即可。 caelus会自动识别在线作业
 
 # 提交离线作业
-###1、离线作业通过kubernetes提交
+### 1、离线作业通过kubernetes提交
 （1）配置"task_type.offline_type"为"k8s"
 
 （2）pod的annotation增加：
@@ -152,7 +152,7 @@ mixer.kubernetes.io/uts-mode: "" (host网络模式下，kubelet会把uts namespa
 
 （3）离线pod拉起成功后，其cgroup目录为/sys/fs/cgroup/xx/kubepods/offline,如下图：![cgroup目录结构](images/cgroup.png)
 
-###2、离线作业通过YARN提交
+### 2、离线作业通过YARN提交
 （1）caelus支持YARN，其架构如下。nodemanager需要用户自己容器化，并将nm-operator也装入镜像中，nodemanager的yaml可参考
 [nodemanager yaml](../hack/yaml/nodemanager.yaml)。容器启动后，nm-operator做为一个server启动（可以把nm-operator当做容器的1号进程）。
 ![yarn](images/yarn.png)
@@ -166,4 +166,4 @@ mixer.kubernetes.io/storage-opt-size: "1Gi"(限制容器的rootfs目录大小，
 mixer.kubernetes.io/uts-mode: "" (host网络模式下，kubelet会把uts namespace也配置为host，通过此参数可以创建一个新的uts namespace)
 ```
 
-（4）提交nodemanager pod
+（4）提交nodemanager pod。caelus会自动通过nm-operator接口拉起nodemanager
