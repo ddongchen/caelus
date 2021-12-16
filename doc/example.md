@@ -3,12 +3,10 @@
 ```shell
 [xx]# make build
 [xx]# ll _output/bin/
-total 129236
--rwxr-xr-x 1 root root 51634520 Dec 12 16:28 caelus
--rwxr-xr-x 1 root root  6819965 Dec 12 16:28 caelus_metric_adapter
--rwxr-xr-x 1 root root 16416404 Dec 12 16:28 lighthouse
--rwxr-xr-x 1 root root 17624320 Dec 12 16:28 nm-operator
--rwxr-xr-x 1 root root 39832989 Dec 12 16:28 plugin-server
+-rwxr-xr-x 1 root root 51634520 16:28 caelus
+-rwxr-xr-x 1 root root 16416404 16:28 lighthouse
+-rwxr-xr-x 1 root root 17624320 16:28 nm-operator
+-rwxr-xr-x 1 root root 39832989 16:28 plugin-server
 
 其中
 caelus:可通过daemonset部署。实时计算节点空闲资源，并执行离线资源隔离和资源上报。同时通过干扰检测保证在线的服务质量
@@ -17,8 +15,6 @@ nm-operator:nodemanager镜像中做为server启动，caelus通过nm-operator暴�
 lighthouse: 转发kubelet的容器请求到docker
 plugin-server: 定向对kubelet发送给docker的容器请求参数做适配，如修改cgroup目录
 ```
-
-
 
 （2）编译caelus镜像
 ```bash
@@ -102,14 +98,13 @@ systemctl start plugin-server
 systemctl enable lighthouse
 systemctl start lighthouse
 systemctl restart kubelet
-
 ```
 
 # 部署caelus
 ###配置文件
 ####1、caelus.json
 caelus.json文件描述了caelus内置的各个模块的各种配置，其[默认配置](../hack/config/caelus.json)可以让caelus正常运行，但最好是根据业务的实际需求来适配不同的参数。
-具体参数说明可参考[caelus配置文件说明]()
+具体参数说明可参考[caelus配置文件说明](xxxx)
 
 ####2、rules.json
 rules.json文件描述了caelus的干扰检测规则。如cpu检测，首先配置检测算法，如表达式检测（expression），或指数加权平均检测（ewma）。若选择expression算法，可配置每隔1分钟检测节点cpu使用率，若连续3次超过90%，或连续5分钟内超过90%，则认为节点当前cpu
@@ -125,7 +120,50 @@ caelus可通过daemonset部署到K8s集群中，pod需要配置某些capabilitie
 caelus --v=2 --logtostderr --config=/etc/caelus/caelus.json --hostname-override=$(NODE_NAME) --insecure-bind-address=xx
 
 若使用diskquota功能，则需要再增加：--docker=unix:///var/run/docker.sock，用于跟docker通信，获取容器的挂载目录
-# 提交离线作业
-1、离线作业通过kubernetes提交
 
-2、离线作业通过YARN提交
+# 在线作业场景
+###1、在线作业为非K8s场景
+在线作业直接运行在物理机上，如很多还未来得及容器化或不适合容器化的在线作业。因Caelus目前上基于K8s平台，所以需要在物理机上部署K8s相关组件，具体如下：
+
+（1）在线作业所在的节点部署K8s slave组件
+
+（2）配置文件caelus.json，配置"task_type.online_type"为"local"。"online.enable"配置为true，"online.pid_to_cgroup"配置移动在线进程pid
+到统一cgroup目录下，便于cadvisor收集数据。"online.jobs"填写跟在线作业相关的信息，其中"online.jobs.command"为在线进程的正则匹配表达式。
+若在线作业有暴露指标，可以填写到"online.jobs.metrics"。具体可参考[配置文件说明](xxx)
+
+（3）提交caelus workload。caelus会自动匹配在线进程，并将其移动到统一cgroup目录下。若在线进程本身就在cgroup目录中，则直接使用现有的cgroup目录
+
+（4）curl http://xxx:10030/metrics | grep online 可查看在线作业的资源使用情况
+
+###2、在线作业为K8s场景
+在线作业直接运行在K8s平台，只需修改配置文件, 配置"task_type.online_type"为"k8s"即可。 caelus会自动识别在线作业
+
+# 提交离线作业
+###1、离线作业通过kubernetes提交
+（1）配置"task_type.offline_type"为"k8s"
+
+（2）pod的annotation增加：
+```shell
+mixer.kubernetes.io/app-class: greedy (必填)
+mixer.kubernetes.io/pids-limit: "xxx" (限制容器内的进程数)
+mixer.kubernetes.io/storage-opt-size: "1Gi"(限制容器的rootfs目录大小，要求镜像所在的分区支持diskquota)
+mixer.kubernetes.io/uts-mode: "" (host网络模式下，kubelet会把uts namespace也配置为host，通过此参数可以创建一个新的uts namespace)
+```
+
+（3）离线pod拉起成功后，其cgroup目录为/sys/fs/cgroup/xx/kubepods/offline,如下图：![cgroup目录结构](images/cgroup.png)
+
+###2、离线作业通过YARN提交
+（1）caelus支持YARN，其架构如下。nodemanager需要用户自己容器化，并将nm-operator也装入镜像中，nodemanager的yaml可参考
+[nodemanager yaml](../hack/yaml/nodemanager.yaml)。容器启动后，nm-operator做为一个server启动（可以把nm-operator当做容器的1号进程）。
+![yarn](images/yarn.png)
+（2） 配置"task_type.offline_type"为"yarn_on_k8s"
+
+（3）nodemanager pod的annotation增加：
+```shell
+mixer.kubernetes.io/app-class: greedy (必填)
+mixer.kubernetes.io/pids-limit: "xxx" (限制容器内的进程数)
+mixer.kubernetes.io/storage-opt-size: "1Gi"(限制容器的rootfs目录大小，要求镜像所在的分区支持diskquota)
+mixer.kubernetes.io/uts-mode: "" (host网络模式下，kubelet会把uts namespace也配置为host，通过此参数可以创建一个新的uts namespace)
+```
+
+（4）提交nodemanager pod
