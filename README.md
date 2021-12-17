@@ -34,11 +34,6 @@ Find more usage at [Tutorial.md](doc/tutorial.md). The project also have two att
 
 [nm_operator](doc/nm_operator.md) is used to execute YARN commands in the way of remote API.
 
-#### metric_adapter
-
-[metric_adapter](doc/metric_adapter.md) is used to collect more application metrics with adapter extension.
-
-
 ## Getting started
 
 ### Build
