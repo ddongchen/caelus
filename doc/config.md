@@ -10,8 +10,6 @@ caelus进程重启恢复状态
 
 （1）check_point_dir：checkpoint的内容存放目录。若caelus运行在容器中，此目录需为hostpath
 
-（2）node_resource_key：checkpoint名称，可自定义
-
 ### 3、task_type
 配置在线和离线作业类型
 

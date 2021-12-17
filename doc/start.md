@@ -118,9 +118,9 @@ rules.json文件描述了caelus的干扰检测规则。如cpu检测:
 caelus可通过daemonset部署到K8s集群中，pod需要配置某些capabilities，同时需要挂载宿主机根目录到caelus容器中，以便cadvisor可以正常运行。
 具体yaml可参考[caelus yaml](../hack/yaml/caelus.yaml)
 
-用户也可以根据需求直接将caelus运行在宿主机上，这可以通过rpm包进行部署。其运行命令为：
+用户也可以根据需求直接将Caelus运行在宿主机上，这可以通过rpm包进行部署。其运行命令为：
 
-caelus --v=2 --logtostderr --config=/etc/caelus/caelus.json --hostname-override=$(NODE_NAME) --insecure-bind-address=xx
+caelus --v=2 --logtostderr --config=/etc/caelus/caelus.json --kubeconfig=xx --hostname-override=xx --insecure-bind-address=xx
 
 若使用diskquota功能，则需要再增加：--docker=unix:///var/run/docker.sock，用于跟docker通信，获取容器的挂载目录
 
