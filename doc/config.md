@@ -75,7 +75,7 @@ ahead_of_unSchedule表示提前多长时间禁止接收离线作业，让已运�
 - ignored_cgroups：跳过不需要收集指标的cgroup目录
 
 （4）rdt：通过intel RDT工具收集的指标
-（工具详见：https://www.intel.cn/content/www/cn/zh/architecture-and-technology/resource-director-technology.html），
+（工具详见：https://www.intel.cn/content/www/cn/zh/architecture-and-technology/resource-director-technology.html ），
 包括cache miss、LLC、内存带宽MRL和MBR等
 
 - rdt_command： rdt工具路径

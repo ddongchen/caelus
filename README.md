@@ -76,7 +76,7 @@ $ kubectl -n kube-system get daemonset
 ```
 
 ### More
-You could find more from the [detailed](doc/start.md)
+You could find more about how to start with Caelus from the [DETAIL](doc/start.md)
 
 ## Contributing
 For more information about contributing issues or pull requests, see our [Contributing to Caelus](doc/contributing.md).
