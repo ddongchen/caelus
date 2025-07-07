@@ -83,3 +83,6 @@ For more information about contributing issues or pull requests, see our [Contri
 
 ## License
 Caelus is under the Apache License 2.0. See the [License](LICENSE) file for details.
+
+The copyright notice pertaining to the Tencent code in this repo was previously in the name of “Tencent.”  That entity has now been de-registered.  You should treat all previously distributed copies of the code as if the copyright notice was in the name of “Tencent.”
+
